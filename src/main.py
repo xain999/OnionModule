@@ -7,7 +7,8 @@ from config import *
 
 def main():
     print(sys.version)
-    print(Config.readConfiguration(""))
+    config = Config.readConfiguration("../config.ini")
+    print(config)
     print("abc")
 
 if __name__ == "__main__":
