@@ -11,6 +11,8 @@ class Config(object):
         config.read(filename)
         
         # read values from a section
+        self.maxRelayConnections = config.getint('ONION', 'max_relay_connections')
+        self.onionHops = config.getint('ONION', 'onion_hops')
         p2pHostname = config.get('ONION', 'P2P_HOSTNAME')
         p2pPort = config.getint('ONION', 'P2P_PORT')
         self.p2pAddress = self.getAddress(p2pHostname, p2pPort)

@@ -15,7 +15,7 @@ def main():
     #socket connect to the UI module
 
     #connect to RPS module
-    rps = RPSConnection(config.rpsAddress)
+    rps = RPSConnection(config.rpsAddress, config.apiAddress.ipv6)
     print('done')
     peer = rps.getRandomPeer()
 
