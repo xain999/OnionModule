@@ -1,3 +1,4 @@
+# system imports
 import socket
 
 class UDPSocket(object):
@@ -20,5 +21,5 @@ class TCPSocketListen(object):
         if address.ipv6:
             self.sock = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
         else
-            self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREA)
+            self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.sock.bind((host, port))
