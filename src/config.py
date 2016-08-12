@@ -17,6 +17,7 @@ class Config(object):
         p2pPort = config.getint('ONION', 'P2P_PORT')
         self.p2pAddress = self.getAddress(p2pHostname, p2pPort)
         self.apiAddress = self.getAddress(config.get('ONION', 'api_address'))
+        self.onionAuthAddress = self.getAddress(config.get('ONION_AUTHENTICATION', 'api_address'))
         self.rpsAddress = self.getAddress(config.get('RPS', 'api_address'))
         #self.bool_val = config.getboolean('ONION', 'bool_val')
         #self.float_val = config.getfloat('ONION', 'pi_val')
