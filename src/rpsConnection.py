@@ -31,8 +31,6 @@ class RPSConnection(object):
         self.lock = threading.Lock()
 
     def getRandomPeer(self):
-        #TODO: check of socket is connected
-
         with self.lock:
             self.sock.sendall(self.query)
 

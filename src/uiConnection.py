@@ -50,7 +50,7 @@ class UIConnection(object):
         randomPeers = []
         for i in range(self.hops):
             randomPeers.append(self.rps.getRandomPeer())
-        onion.buildTunnel(destPeer, randomPeers)
+        onion.build_tunnel(destPeer, randomPeers)
         print "Tunnel built"
 
     def _destroyTunnel(self, onion, rawData):
@@ -86,11 +86,11 @@ class UIConnection(object):
         self.connection.sendall(packet)
         
     def _sendData(self, onion, data):
-        tunnelId = struct.unpack('!H', rawData[:4])[0]
-        data = data[:4]
-        onion.send(tunnelId, data)
+        tunnelId = struct.unpack('!L', data[:4])[0]
+        data = data[4:]
+        onion.sendData(tunnelId, data)
 
-    def checkForData(self):
+    def checkForData(self, onion):
         readable, writable, exceptional = select.select([ self.connection ], [], [ self.connection ])
 
         if len(exceptional) > 0:
@@ -105,9 +105,7 @@ class UIConnection(object):
                 rawData = recv_all(self.connection, size - 4)
 
                 print("rawData : " + str(rawData))
-                onion = 'onion'
 
-                #TODO: Do threading here
                 if id == UIConnectionType.ONION_TUNNEL_BUILD:
                     print ("build tunnel")
                     self._buildTunnel(onion, rawData)

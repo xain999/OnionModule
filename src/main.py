@@ -18,7 +18,7 @@ def main():
 
     config = Config.readConfiguration(args.c)
 
-    api.start_listening()
+    api.start_listening(config)
 
 
 if __name__ == "__main__":
