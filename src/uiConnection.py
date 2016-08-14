@@ -37,7 +37,7 @@ class UIConnection(object):
     def _buildTunnel(self, onion, rps, rawData):
         pass
         """
-        port = struct.unpack('!H', rawData[2:4])
+        port = struct.unpack('!H', rawData[2:4])[0]
         ip = None
         key = ''
 
@@ -59,7 +59,7 @@ class UIConnection(object):
 
     def _destryTunnel(self, onion, rawData):
         pass
-        #tunnelId = struct.unpack('!L', (rawData[:4])
+        #tunnelId = struct.unpack('!L', (rawData[:4])[0]
         #onion.destroyTunnel(tunnelId)
 
     def _coverTraffic(self, onion, rawData):

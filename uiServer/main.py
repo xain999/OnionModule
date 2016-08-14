@@ -64,7 +64,7 @@ while True:
         if len(readable) > 0:
             print("SOCKET HAS DATA!")
 
-            size = socket.ntohs(sock.recv(2))
+            size = struct.unpack('!H', sock.recv(2))[0]
             packet = sock.recv(size - 2)
             packetType = packet[:2]
 
@@ -110,7 +110,7 @@ while True:
             print("NO TUNNEL CONNECTED")
             continue
 
-        msg = struct.pack(">hI", ONION_TUNNEL_DATA, tunnelId)
+        msg = struct.pack("!HL", ONION_TUNNEL_DATA, tunnelId)
         msg += str.encode('Ill take you to the candy shop')
         msg += str.encode('I ll let you lick the lollipop')
         msg += str.encode('Go  head girl dont you stop')
@@ -121,7 +121,7 @@ while True:
         msg += str.encode('Keep going til you hit the spot, whoa')
 
         length = len(msg)
-        msg += socket.htons(length)
+        msg += struct.pack('!H', length)
         sock.sendall(msg)
 
     elif user == 4:
@@ -129,7 +129,7 @@ while True:
             print("NO TUNNEL CONNECTED")
             continue
 
-        msg = struct.pack(">hhI", 8, ONION_TUNNEL_DESTROY, tunnelId)
+        msg = struct.pack("!HHL", 8, ONION_TUNNEL_DESTROY, tunnelId)
         sock.sendall(msg)
         connected = False
         tunnelId = 0

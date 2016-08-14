@@ -1,4 +1,5 @@
 import socket
+import struct
 from socketHelper import create_socket
 from threading import Thread
 from uiConnection import UIConnection
@@ -6,8 +7,8 @@ from uiConnection import UIConnection
 """"
 def _parse_request(rawData):
     try:
-        size = socket.ntohs(rawData[:2])
-        id = socket.ntohs(rawData[2:4])
+        size = struct.unpack('!H', rawData[:2])[0]
+        id = struct.unpack('!H', rawData[2:4])[0]
         rawData = rawData[4:size]
     except TypeError:
         print "Invalid packet"

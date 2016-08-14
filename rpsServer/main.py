@@ -25,13 +25,13 @@ while True:
         data = connection.recv(4)
 
         if data:
-            size = struct.unpack(">h", data[:2])
-            print("size: " + str(size[0]))
-            id = struct.unpack(">h", data[2:4])
+            size = struct.unpack("!H", data[:2])[0]
+            print("size: " + str(size))
+            id = struct.unpack("!H", data[2:4])[0]
             print("id: " + str(id[0]))
 
-            if id[0] == 540:
-                msg = struct.pack(">hhhh", 524, 541, 10010, 0)
+            if id == 540:
+                msg = struct.pack("!HHHH", 524, 541, 10010, 0)
                 msg += socket.inet_aton('127.0.0.1')
                 msg += str.encode('-----BEGIN PUBLIC KEY-----')
                 msg += str.encode('MIICIjANBgkqhkiG9w0BAQEFAAOCAg8AMIICCgKCAgEAs+kBcVXsFV6mKuXh9OKZ')
@@ -48,7 +48,7 @@ while True:
                 msg += str.encode('Y1CVSkwZ2LDUqsWB/gACpQ8CAwEAAQ==')
                 msg += str.encode('-----END PUBLIC KEY-----')
                 length = len(msg)
-                msg += str(struct.pack(">h", length))
+                msg += str(struct.pack("!H", length))
                 connection.send(msg)
 
         else:

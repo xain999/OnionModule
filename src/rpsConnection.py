@@ -2,10 +2,11 @@
 import socket
 import struct
 import threading
+import sys
 
 #user imports
 from enum import Enum
-
+from socketHelper import recv_all
 from address import *
 
 class Peer(object):
@@ -26,7 +27,7 @@ class RPSConnection(object):
         
         self.sock.connect((address.ip, address.port))
         self.isIPv6 = isIPv6
-        self.query = struct.pack('>hh', 4, RPSConnectionType.RPS_QUERY)
+        self.query = struct.pack('!HH', 4, RPSConnectionType.RPS_QUERY)
 
         self.lock = threading.Lock()
 
@@ -40,13 +41,14 @@ class RPSConnection(object):
                 raise Exception('socket sent error!')
 
             rawData = self.sock.recv(2)
-            size = struct.unpack('>h', rawData[0:2])
-            rawData = self.sock.recv(size[0] - 2)
-            id = struct.unpack('>h', rawData[:2])
-            if id[0] != RPSConnectionType.RPS_PEER:
-                return None
+            size = struct.unpack('!H', rawData[0:2])[0]
+            rawData = recv_all(self.sock.recv, size - 2)
+            id = struct.unpack('!H', rawData[:2])[0]
+            if id != RPSConnectionType.RPS_PEER:
+                print("Cannot get Peer")
+                sys.exit(1)
             
-            port = struct.unpack('>h', rawData[2:4])
+            port = struct.unpack('!H', rawData[2:4])[0]
             ip = None
             key = ''
 
@@ -57,6 +59,6 @@ class RPSConnection(object):
                 ip = socket.inet_ntop(socket.AF_INET, rawData[6:10])
                 key = rawData[10:]
 
-            return Peer(ip, port[0], self.isIPv6, key)
+            return Peer(ip, port, self.isIPv6, key)
         
 

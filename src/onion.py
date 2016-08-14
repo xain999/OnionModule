@@ -30,20 +30,20 @@ class Onion(object):
 
 
     def _relaySetup(self, rawData, inSock):
-        dstPort = socket.ntohs(rawData[:2])
+        dstPort = struct.unpack('!H, rawData[:2])
         key = None
         tunnelId = None
         sock = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
 
         if self.isIPv6:
             dstIP = socket.inet_ntop(socket.AF_INET6, rawData[4:20])
-            tunnelId = socket.ntohs(rawData[20:24])
+            tunnelId = struct.unpack('!H, rawData[20:24])
             key = rawData[24:]
             sock.connect((dstIP, port))
 
         else:
             dstIP = socket.inet_ntop(socket.AF_INET, rawData[4:8])
-            tunnelId = socket.ntohs(rawData[8:12])
+            tunnelId = struct.unpack('!H, rawData[8:12])
             key = rawData[12:]
             sock.connect((dstIP, port))
 
@@ -55,7 +55,7 @@ class Onion(object):
 
         port = self.udpManager.addSocket()
 
-        response = struct.pack('>hhh', OnionMsgType.RELAY_CONFIRM, port, 0)
+        response = struct.pack('!HHH', OnionMsgType.RELAY_CONFIRM, port, 0)
 
         if self.isIPv6:
             response += socket.inet_pton(socket.AF_INET6, self.ip)
@@ -63,11 +63,11 @@ class Onion(object):
             response += socket.inet_pton(socket.AF_INET, self.ip)
         
         size = len(response) + 2
-        response = socket.htons(size) + response
+        response = struct.pack('!H', size) + response
         inSock.sendall(response)
 
     def _relayMessage(self, rawData, inSock):
-        tunnelId = socket.ntohs(rawData[:4])
+        tunnelId = struct.unpack('!H, rawData[:4])
         rawData = rawData[4:]
         if inSock in self.forward:
             sock = self.reverseMapping[tunnelId]
@@ -77,7 +77,7 @@ class Onion(object):
             sock.sendall(rawData)
 
     def _relayDestroy(self, rawData, inSock):
-        tunnelId = socket.ntohs(rawData[:4])
+        tunnelId = struct.unpack('!H, rawData[:4])
         rawData = rawData[4:]
         sock = None
 
@@ -128,8 +128,8 @@ class Onion(object):
                 rawData = s.recv(4)
 
                 if rawData:
-                    size = socket.ntohs(rawData[:2])
-                    id = socket.ntohs(rawData[2:4])
+                    size = struct.unpack('!H, rawData[:2])
+                    id = struct.unpack('!H, rawData[2:4])
                     rawData = s.recv(size - 4)
                     
                     if id == OnionMsgType.RELAY_SETUP:

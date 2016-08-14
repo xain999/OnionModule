@@ -38,7 +38,7 @@ class SocketManager(object):
             self.sockets[port] = None
 
     def _forwardMessage(self, rawData, sock):
-        port = socket.ntohs(rawData[:2])
+        port = struct.unpack('!H, rawData[:2])
         ip = None
         if self.isIPv6:
             ip = socket.inet_ntop(socket.AF_INET6, rawData[4:20])
@@ -50,10 +50,10 @@ class SocketManager(object):
         sock.sendto(rawData, (ip, port))
 
     def _assembleAndRead(self, rawData, ui):
-        size = socket.ntohs(rawData[:2]) - 2
-        pktId = socket.ntohs(rawData[2:4])
-        pktCount = socket.ntohs(rawData[4:6])
-        pktNo = socket.ntohs(rawData[4:6])
+        size = struct.unpack('!H, rawData[:2]) - 2
+        pktId = struct.unpack('!H, rawData[2:4])
+        pktCount = struct.unpack('!H, rawData[4:6])
+        pktNo = struct.unpack('!H, rawData[4:6])
         data = rawData[8:size - 8]
 
         if self.packetCountTotal[pktId] == None:
@@ -83,7 +83,7 @@ class SocketManager(object):
 
         for s in readable:
             rawData = s.recv(self.packetSize)
-            id = socket.ntohs(rawData[:2])
+            id = struct.unpack('!H, rawData[:2])
             
             if id == UDPMsgType.FWD:
                 self._forwardMessage(rawData[2:], s)
