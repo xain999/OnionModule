@@ -8,7 +8,7 @@ from rpsConnection import *
 from socketHelper import recv_all
 from enum import Enum
 
-class OnionAuthType(Enum):
+class OnionAuthType(enumerate):
     AUTH_SESSION_START          = 600
     AUTH_SESSION_HS1            = 601
     AUTH_SESSION_INCOMING_HS1   = 602

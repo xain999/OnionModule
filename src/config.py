@@ -1,5 +1,7 @@
 # system imports
 import ConfigParser
+import base64
+from M2Crypto import RSA
 
 #user imports
 from address import *
@@ -20,6 +22,9 @@ class Config(object):
         self.onionAuthAddress = self._getAddress(config.get('ONION_AUTHENTICATION', 'api_address'))
         self.rpsAddress = self._getAddress(config.get('RPS', 'api_address'))
         self.packetSize = int(config.get('ONION', 'packet_size'))
+        hostKeyName = config.get('DEFAULT', 'HOSTKEY')
+        self.hostKey = open(hostKeyName, 'rb').read()
+
         #self.bool_val = config.getboolean('ONION', 'bool_val')
         #self.float_val = config.getfloat('ONION', 'pi_val')
 

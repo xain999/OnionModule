@@ -1,3 +1,4 @@
 configparser
 enum
 argparse
+M2Crypto
