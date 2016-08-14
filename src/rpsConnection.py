@@ -17,7 +17,7 @@ class Peer(object):
 class RPSConnectionType(Enum):
     RPS_QUERY = 540
     RPS_PEER = 541
-
+    
 class RPSConnection(object):
     def __init__(self, address, isIPv6):
         if address.ipv6:

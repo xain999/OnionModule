@@ -32,26 +32,23 @@ class UIConnection(object):
         self.sock.listen(1)
         self.connection, self.address = self.sock.accept()
 
-    def _buildTunnel(self, onion, rps, rawData):
-        pass
-        """
+    def _buildTunnel(self, onion, rawData):
         port = struct.unpack('!H', rawData[2:4])[0]
         ip = None
-        key = ''
+        key = 
 
         if self.isIPv6:
             ip = socket.inet_ntop(socket.AF_INET6, rawData[4:20])
-            key = rawData[20:]
+            key = str.decode(rawData[20:])
         else:
             ip = socket.inet_ntop(socket.AF_INET, rawData[4:8])
-            key = rawData[8:]
+            key = str.decode(rawData[8:])
         
         destPeer = Peer(ip, port, self.IPv6, key)
         randomPeers = []
         for i in self.hops:
             randomPeers.append(rps.getRandomPeer())
         onion.buildTunnel(destPeer, randomPeers)
-        """
 
         #TODO: Respond the UI
 
@@ -62,7 +59,7 @@ class UIConnection(object):
 
     def _coverTraffic(self, onion, rawData):
         pass
-        #onion.sendCoverTraffic(rps)
+        #onion.sendCoverTraffic()
 
     def checkForData(self):
         readable, writable, exceptional = select.select([ self.connection ], [], [ self.connection ])
@@ -83,13 +80,13 @@ class UIConnection(object):
                 #TODO: Do threading here
                 if id == UIConnectionType.ONION_TUNNEL_BUILD:
                     print ("build tunnel")
-                    #_buildTunnel(onion, rps, rawData)
+                    _buildTunnel(onion, rawData)
                 elif id == UIConnectionType.ONION_TUNNEL_DESTROY:
                     print("tunnel destroy")
-                    #_destroyTunnel(onion, rawData)
+                    _destroyTunnel(onion, rawData)
                 elif id == UIConnectionType.ONION_TUNNEL_DATA:
                     print("onion data")
-                    #_coverTraffic(onion, rps, rawData)
+                    _coverTraffic(onion, rawData)
             else:
                 print "UI Disconnected"
                 return True
