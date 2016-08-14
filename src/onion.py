@@ -122,7 +122,7 @@ class Onion(object):
             elif id == OnionMsgType.TUNNEL_BUILD_HS2:
                 self.handle_hs2(rawData)
             elif id == OnionMsgType.TUNNEL_DATA:
-                print "tunnel data"
+                self.handle_tunnel_data(rawData)
             elif id == OnionMsgType.TUNNEL_ERROR:
                 print "tunnel error"
 
@@ -177,3 +177,29 @@ class Onion(object):
         print tunnel_id, payloadSize, hs2Payload, padding
 
         self.onion_auth.authSessionConfirm(0, hs2Payload)  #TODO: Add session id here
+
+    def handle_tunnel_data(self, data):
+        tunnel_id = int(struct.unpack("!L", data[0:4])[0])
+        data = data[4:]
+
+        # if is last hop in tunnel id
+        if True:
+            nxt = struct.unpack("!HH", data[0:4])
+            cvr = nxt[0]
+            data_size = nxt[1]
+            data = data[4:]
+
+            payload = data[0:data_size]
+            data = data[data_size:]
+
+            checksum = data[:128]
+            data = data[128:]
+
+            padding = data
+
+            if not cvr == 0:
+                pass
+                #notify of data
+        else:
+            pass
+            # forward data to next node
