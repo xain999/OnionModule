@@ -1,9 +1,11 @@
 # system imports
 import socket
 import select
+import struct
 from threading import Thread
 
 #user imports
+from socketHelper import recv_all
 from rpsConnection import *
 
 
@@ -72,21 +74,21 @@ class UIConnection(object):
 
         if len(readable) == 1:
             rawData = self.connection.recv(4)
-            size = socket.ntohs(rawData[:2])
-            id = socket.ntohs(int(str(rawData[2:4])))
-            rawData = self.connection.recv(size - 4)
+            size = struct.unpack('!H', rawData[:2])[0]
+            id = struct.unpack('!H', rawData[2:4])[0]
+            rawData = recv_all(self.connection, size - 4)
 
-            print "rawData : " + rawData
+            print("rawData : " + str(rawData))
 
             #TODO: Do threading here
             if id == UIConnectionType.ONION_TUNNEL_BUILD:
-                print "build tunnel"
+                print ("build tunnel")
                 #_buildTunnel(onion, rps, rawData)
             elif id == UIConnectionType.ONION_TUNNEL_DESTROY:
-                print "tunnel destroy"
+                print("tunnel destroy")
                 #_destroyTunnel(onion, rawData)
             elif id == UIConnectionType.ONION_COVER:
-                print "onion cover"
+                print("onion cover")
                 #_coverTraffic(onion, rps, rawData)
             
 

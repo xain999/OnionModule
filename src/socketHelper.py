@@ -14,11 +14,11 @@ def create_socket(address, is_listen=False):
     return sock
 
 def recv_all(sock, size):
-    data = ''
+    data = bytearray()
 
     while size > 0:
         recvd = sock.recv(size)
         size -= len(recvd)
-        data = data + recvd
+        data += recvd
 
     return data
