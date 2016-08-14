@@ -12,3 +12,13 @@ def create_socket(address, is_listen=False):
         sock.bind((addr, address.port))
 
     return sock
+
+def recv_all(sock, size):
+    data = ''
+
+    while size > 0:
+        recvd = sock.recv(size)
+        size -= len(recvd)
+        data = data + recvd
+
+    return data
