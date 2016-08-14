@@ -5,7 +5,6 @@ import threading
 import sys
 
 #user imports
-from enum import Enum
 from socketHelper import recv_all
 from address import *
 
@@ -14,7 +13,7 @@ class Peer(object):
         self.address = Address(ip, port, ipv6)
         self.key = hostKey
 
-class RPSConnectionType(Enum):
+class RPSConnectionType(enumerate):
     RPS_QUERY = 540
     RPS_PEER = 541
     

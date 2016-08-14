@@ -1,5 +1,5 @@
 # system imports
-from configparser import ConfigParser
+import ConfigParser
 
 #user imports
 from address import *
@@ -7,7 +7,7 @@ from address import *
 class Config(object):
     def __init__(self, filename):
         # instatiating parser
-        config = ConfigParser()
+        config = ConfigParser.ConfigParser()
         config.read(filename)
         
         # read values from a section

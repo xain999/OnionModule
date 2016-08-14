@@ -7,7 +7,7 @@ from socketHelper import recv_all
 from rpsConnection import *
 
 
-class UIConnectionType(Enum):
+class UIConnectionType(enumerate):
     ONION_TUNNEL_BUILD = 560
     ONION_TUNNEL_READY = 561
     ONION_TUNNEL_INCOMING = 562
@@ -35,7 +35,7 @@ class UIConnection(object):
     def _buildTunnel(self, onion, rawData):
         port = struct.unpack('!H', rawData[2:4])[0]
         ip = None
-        key = 
+        key = None
 
         if self.isIPv6:
             ip = socket.inet_ntop(socket.AF_INET6, rawData[4:20])
