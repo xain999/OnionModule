@@ -8,6 +8,7 @@ sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 # Bind the socket to the port
 server_address = ('localhost', 10010)
 print('starting up on %s port %s' % server_address)
+sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 sock.bind(server_address)
 
 # Listen for incoming connections
@@ -28,10 +29,10 @@ while True:
             size = struct.unpack("!H", data[:2])[0]
             print("size: " + str(size))
             id = struct.unpack("!H", data[2:4])[0]
-            print("id: " + str(id[0]))
+            print("id: " + str(id))
 
             if id == 540:
-                msg = struct.pack("!HHHH", 524, 541, 10010, 0)
+                msg = struct.pack("!HHH", 541, 10010, 0)
                 msg += socket.inet_aton('127.0.0.1')
                 msg += str.encode('-----BEGIN PUBLIC KEY-----')
                 msg += str.encode('MIICIjANBgkqhkiG9w0BAQEFAAOCAg8AMIICCgKCAgEAs+kBcVXsFV6mKuXh9OKZ')
@@ -47,8 +48,8 @@ while True:
                 msg += str.encode('n589nQCQqUsWMBLSFnaRNEwwX7ipqbFkDTwGkLEAjt4e9iGGBBk9U+iWGPN5RSMa')
                 msg += str.encode('Y1CVSkwZ2LDUqsWB/gACpQ8CAwEAAQ==')
                 msg += str.encode('-----END PUBLIC KEY-----')
-                length = len(msg)
-                msg += str(struct.pack("!H", length))
+                length = len(msg) + 2
+                msg = str(struct.pack("!H", length)) + msg
                 connection.send(msg)
 
         else:
