@@ -1,120 +1,81 @@
-# system imports
+from onionAuthentication import OnionAuthentication, Peer
 import socket
-import struct
 import select
-from threading import Thread
+import struct
+from enum import Enum
+import random
+from address import Address
 
-#user imports
-from rpsConnection import *
 
 class OnionMsgType(Enum):
-    RELAY_SETUP = 570
-    RELAY_CONFIRM = 571
-    RELAY_MSG = 572
-    RELAY_DESTROY = 573
-    RELAY_ERROR = 574
-    TUNNEL_REQUEST = 575
-    TUNNEL_ACCEPT = 576
-    TUNNEL_DECLINE = 577
-    TUNNEL_CLOSE = 578
+    TUNNEL_BUILD_HS1 = 663
+    TUNNEL_BUILD_HS2 = 664
+    TUNNEL_DATA = 665
+    TUNNEL_ERROR = 666
+
+
+class SocketStates(Enum):
+    SENT_HS1 = 1
+
 
 class Onion(object):
-    def __init__(self, address, maxConnections, udpManager):
+    def __init__(self, config):
+        self.onion_auth = OnionAuthentication(config.onionAuthAddress)
+        address = config.p2pAddress
         self.isIPv6 = True if address.ipv6 else False
         self.ip = address.ip
 
         if address.ipv6:
-            self.sock = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
+            self.server = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
         else:
-            self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
+        self.server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        self.server.bind((address.ip, address.port))
+        self.server.listen(5)
+        self.sockets = [self.server]
 
-    def _relaySetup(self, rawData, inSock):
-        dstPort = struct.unpack('!H, rawData[:2])
-        key = None
-        tunnelId = None
-        sock = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
+        self.sock_states = dict()
 
-        if self.isIPv6:
-            dstIP = socket.inet_ntop(socket.AF_INET6, rawData[4:20])
-            tunnelId = struct.unpack('!H, rawData[20:24])
-            key = rawData[24:]
-            sock.connect((dstIP, port))
+    def build_tunnel(self, destPeer, randomPeers):
+        hop_chain = [peer for peer in randomPeers]
+        hop_chain.append(destPeer)
+        p = Peer("0.0.0.0", 0, False, "")
+        hop_chain.append(p)
 
+        for i in range(0, len(hop_chain)-1):
+            self.build_hop(hop_chain[i], hop_chain[i+1])
+
+    def build_hop(self, peer, next_peer):
+        sessionId, hs1 = self.onion_auth.authSessionStart(peer.key)
+        #print sessionId, hs1, peer.address.ip, peer.address.port
+        tunnel_id = random.getrandbits(32)
+        self.send_hs1(tunnel_id, peer.address, peer.key, hs1, next_peer.address)  # change peer.key to our key
+
+    def send_hs1(self, tunnel_id, hop, host_key, hs1_payload, next_hop):
+        msg = struct.pack("!HL", OnionMsgType.TUNNEL_BUILD_HS1, tunnel_id)
+        if next_hop.ipv6:
+            msg += socket.inet_pton(socket.AF_INET6, next_hop.ip)
         else:
-            dstIP = socket.inet_ntop(socket.AF_INET, rawData[4:8])
-            tunnelId = struct.unpack('!H, rawData[8:12])
-            key = rawData[12:]
-            sock.connect((dstIP, port))
+            msg += socket.inet_pton(socket.AF_INET, next_hop.ip)
+        msg += struct.pack("!HHHH", 0, next_hop.port, len(host_key), len(hs1_payload))
+        msg += str.encode(host_key)
+        msg += hs1_payload
+        length = len(msg) + 2
+        msg = struct.pack("!H", length) + msg
 
-        self.input.append(sock)
-        self.forward.append(inSock)
-        self.forwardMapping[tunnelId] = inSock
-        self.reverse.append(sock)
-        self.reverseMapping[tunnelId] = sock
-
-        port = self.udpManager.addSocket()
-
-        response = struct.pack('!HHH', OnionMsgType.RELAY_CONFIRM, port, 0)
-
-        if self.isIPv6:
-            response += socket.inet_pton(socket.AF_INET6, self.ip)
+        if hop.ipv6:
+            sock = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
         else:
-            response += socket.inet_pton(socket.AF_INET, self.ip)
-        
-        size = len(response) + 2
-        response = struct.pack('!H', size) + response
-        inSock.sendall(response)
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.connect((hop.ip, hop.port))
+        sock.sendall(msg)
+        self.sockets.append(sock)
+        self.sock_states[sock] = SocketStates.SENT_HS1
 
-    def _relayMessage(self, rawData, inSock):
-        tunnelId = struct.unpack('!H, rawData[:4])
-        rawData = rawData[4:]
-        if inSock in self.forward:
-            sock = self.reverseMapping[tunnelId]
-            sock.sendall(rawData)
-        else:
-            sock = self.forwardMapping[tunnelId]
-            sock.sendall(rawData)
 
-    def _relayDestroy(self, rawData, inSock):
-        tunnelId = struct.unpack('!H, rawData[:4])
-        rawData = rawData[4:]
-        sock = None
-
-        if len(rawData) > 0:
-            if inSock in self.forward:
-                sock = self.reverseMapping[tunnelId]
-            else:
-                sock = self.forwardMapping[tunnelId]
-
-        sock.sendall(rawData)
-        self.input.remove(sock)
-        self.forward.remove(sock)
-        self.reverse.remove(sock)
-        self.forwardMapping[tunnelId] = None
-        self.reverseMapping[tunnelId] = None
-        
-
-    def _relayError(self, ui):
-        pass
-
-    def _tunnelRequest(self):
-        pass
-
-    def _tunnelClose(self):
-        pass
-
-    def buildTunnel(self):
-        pass
-
-    def destroyTunnel(self):
-        pass
-
-    def sendCoverTraffic(self):
-        pass
-
-    def update(self):
-        readable, writable, exceptional = select.select(input, [], input)
+    def checkForData(self):
+        readable, writable, exceptional = select.select(self.sockets, [], self.sockets)
 
         # Handle inputs
         for s in readable:
@@ -122,29 +83,53 @@ class Onion(object):
                 # A "readable" server socket is ready to accept a connection
                 connection, client_address = s.accept()
                 connection.setblocking(0)
-                self.inputs.append(connection)
-
+                self.sockets.append(connection)
+                self.handle_data(connection)
             else:
-                rawData = s.recv(4)
+                self.handle_data(s)
 
-                if rawData:
-                    size = struct.unpack('!H, rawData[:2])
-                    id = struct.unpack('!H, rawData[2:4])
-                    rawData = s.recv(size - 4)
-                    
-                    if id == OnionMsgType.RELAY_SETUP:
-                        self._relaySetup(rawData, s)
-                    elif id == OnionMsgType.RELAY_MSG:
-                        self._relayMessage(rawData, s)
-                    elif id == OnionMsgType.RELAY_DESTROY:
-                        self._relayDestroy(rawData, s)
-                    elif id == OnionMsgType.RelayError:
-                        self._relayError()
-                    elif id == OnionMsgType.TUNNEL_REQUEST:
-                        self._tunnelRequest()
-                    elif id == OnionMsgType.TUNNEL_CLOSE:
-                        self._tunnelClose()
 
-                else:
-                    #inputs.remove(s)
-                    s.close()
+    def handle_data(self, conn):
+        rawData = conn.recv(4)
+
+        if rawData:
+            size = struct.unpack('!H', rawData[:2])[0]
+            id = struct.unpack('!H', rawData[2:4])[0]
+            rawData = conn.recv(size - 4)
+
+            if id == OnionMsgType.TUNNEL_BUILD_HS1:
+                self.handle_hs1(rawData)
+            elif id == OnionMsgType.TUNNEL_BUILD_HS2:
+                print "tunnel hs2"
+            elif id == OnionMsgType.TUNNEL_DATA:
+                print "tunnel data"
+            elif id == OnionMsgType.TUNNEL_ERROR:
+                print "tunnel error"
+
+        else:
+            self.sockets.remove(conn)
+            conn.close()
+
+    def handle_hs1(self, data):
+        tunnel_id = int(struct.unpack("!L", data[0:4])[0])
+        data = data[4:]
+
+        if self.isIPv6:
+            ip = socket.inet_ntop(socket.AF_INET6, data[0:16])
+            data = data[20:]
+        else:
+            ip = socket.inet_ntop(socket.AF_INET, data[0:4])
+            data = data[8:]
+
+        nxt = struct.unpack("!HHHH", data[0:64])
+        port = nxt[1]
+        hostKeySize = nxt[2]
+        hs1Size = nxt[3]
+        data = data[64:]
+
+        print tunnel_id, ip, port, hostKeySize, hs1Size, data
+
+        if ip=="0.0.0.0":
+            print "tunnel end here"
+            return
+

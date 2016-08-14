@@ -55,9 +55,9 @@ while True:
 
         if data:
             size = struct.unpack('!H', data[:2])[0]
-            print("size: " + str(size[0]))
+            print("size: " + str(size))
             id = struct.unpack('!H', data[2:4])[0]
-            print("id: " + str(id[0]))
+            print("id: " + str(id))
 
             data = recv_all(connection, size - 4)
 

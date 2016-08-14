@@ -34,14 +34,11 @@ class RPSConnection(object):
         #TODO: check of socket is connected
 
         with self.lock:
-            check = self.sock.sendall(self.query)
-
-            if check != len(self.query):
-                raise Exception('socket sent error!')
+            self.sock.sendall(self.query)
 
             rawData = self.sock.recv(2)
             size = struct.unpack('!H', rawData[0:2])[0]
-            rawData = recv_all(self.sock.recv, size - 2)
+            rawData = recv_all(self.sock, size - 2)
             id = struct.unpack('!H', rawData[:2])[0]
             if id != RPSConnectionType.RPS_PEER:
                 print("Cannot get Peer")
@@ -52,11 +49,11 @@ class RPSConnection(object):
             key = ''
 
             if self.isIPv6:
-                ip = socket.inet_ntop(socket.AF_INET6, rawData[6:22])
-                key = rawData[22:]
+                ip = socket.inet_ntop(socket.AF_INET6, str(rawData[6:22]))
+                key = str(rawData[22:])
             else:
-                ip = socket.inet_ntop(socket.AF_INET, rawData[6:10])
-                key = rawData[10:]
+                ip = socket.inet_ntop(socket.AF_INET, str(rawData[6:10]))
+                key = str(rawData[10:])
 
             return Peer(ip, port, self.isIPv6, key)
         

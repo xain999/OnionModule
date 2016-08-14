@@ -32,7 +32,7 @@ while True:
             print("id: " + str(id))
 
             if id == 540:
-                msg = struct.pack("!HHH", 541, 10010, 0)
+                msg = struct.pack("!HHH", 541, 32032, 0)
                 msg += socket.inet_aton('127.0.0.1')
                 msg += str.encode('-----BEGIN PUBLIC KEY-----')
                 msg += str.encode('MIICIjANBgkqhkiG9w0BAQEFAAOCAg8AMIICCgKCAgEAs+kBcVXsFV6mKuXh9OKZ')

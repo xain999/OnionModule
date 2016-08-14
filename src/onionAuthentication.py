@@ -5,6 +5,8 @@ from threading import Thread
 
 #user imports
 from rpsConnection import *
+from socketHelper import recv_all
+from enum import Enum
 
 class OnionAuthType(Enum):
     AUTH_SESSION_START          = 600
@@ -19,7 +21,7 @@ class OnionAuthType(Enum):
     AUTH_SESSION_CLOSE          = 609
 
 class OnionAuthentication(object):
-    def __init__(self, address, isIPv6):
+    def __init__(self, address):
         if address.ipv6:
             self.sock = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
         else:
@@ -37,8 +39,9 @@ class OnionAuthentication(object):
         self.sock.sendall(packet)
 
         # receiving the response
-        size = struct.unpack('!H', recv(self.sock, 2))[0]
-        packet = recvAll(self.sock, size - 2)
+        data = self.sock.recv(2)
+        size = struct.unpack('!H', data)[0]
+        packet = recv_all(self.sock, size - 2)
         packetType = struct.unpack('!H', packet[:2])[0]
         sessionId = struct.unpack('!L', packet[2:6])[0]
 
