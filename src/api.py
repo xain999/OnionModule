@@ -2,12 +2,6 @@
 from onion import Onion
 from rpsConnection import RPSConnection
 from threading import Thread
-<<<<<<< Updated upstream
-
-
-def start_listening(config):
-    #uiConn = UIConnection(config.apiAddress, config.apiAddress.ipv6, config.onionHops)
-=======
 from uiConnection import UIConnection
 from rpsConnection import RPSConnection
 
@@ -55,7 +49,6 @@ def _handle_api_request(conn, addr):
 def start_listening(config):
     rps = RPSConnection(config.rpsAddress, config.apiAddress.ipv6)
     uiConn = UIConnection(config.apiAddress, config.apiAddress.ipv6, config.onionHops, rps)
->>>>>>> Stashed changes
 
     #end = False
     #while not end:
