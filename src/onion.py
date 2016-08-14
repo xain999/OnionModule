@@ -73,6 +73,14 @@ class Onion(object):
         self.sockets.append(sock)
         self.sock_states[sock] = SocketStates.SENT_HS1
 
+    def send_hs2(self, sock, tunnel_id, hs2_payload):
+        msg = struct.pack("!HLHH", OnionMsgType.TUNNEL_BUILD_HS1, tunnel_id, 0, len(hs2_payload))
+        msg += hs2_payload
+        length = len(msg) + 2
+        msg = struct.pack("!H", length) + msg
+        sock.sendall(msg)
+
+
 
     def checkForData(self):
         readable, writable, exceptional = select.select(self.sockets, [], self.sockets)
