@@ -37,8 +37,12 @@ while True:
 
     if user == 1:
 
-        msg = struct.pack(">hhh", ONION_TUNNEL_BUILD, 0, port)
-        msg += socket.inet_ntop(socket.AF_INET, ip)
+        #msg = struct.pack(">hhh", ONION_TUNNEL_BUILD, 0, port)
+
+        msg = socket.htons(ONION_TUNNEL_BUILD)
+        msg += socket.htons(0)
+        msg += socket.htons(port)
+        msg += socket.inet_pton(socket.AF_INET, ip)
         msg += str.encode('-----BEGIN PUBLIC KEY-----')
         msg += str.encode('MIICIjANBgkqhkiG9w0BAQEFAAOCAg8AMIICCgKCAgEAs+kBcVXsFV6mKuXh9OKZ')
         msg += str.encode('VdkP0MoUl90eE4YS/jT5XMtcUPkVdoPDcmozujPe39dnfP/f6ZgzbPcZQ/6oCHWC')
@@ -54,8 +58,8 @@ while True:
         msg += str.encode('Y1CVSkwZ2LDUqsWB/gACpQ8CAwEAAQ==')
         msg += str.encode('-----END PUBLIC KEY-----')
         length = len(msg)
-        msg += socket.htons(length)
-        sock.sendall(msg)
+        msg = str(socket.htons(length)) + msg
+        sock.send(msg)
 
     elif user == 2:
         readable, writable, exceptional = select.select([sock], [], [sock])

@@ -1,12 +1,14 @@
 import socket
 
 
-def create_socket(address):
+def create_socket(address, is_listen=False):
     if address.ipv6:
         sock = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
-        sock.bind((address.ipv6, address.port))
+        addr = '' if is_listen else address.ipv6
+        sock.bind((addr, address.port))
     else:
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.bind((address.ip, address.port))
+        addr = '' if is_listen else address.ip
+        sock.bind((addr, address.port))
 
     return sock

@@ -5,6 +5,8 @@ import sys
 from config import *
 from rpsConnection import *
 from socketHelper import *
+from threading import Thread
+import api
 
 import argparse
 
@@ -16,31 +18,12 @@ def main():
 
     config = Config.readConfiguration(args.c)
 
-    apiSocket = create_socket(config.apiAddress)
-    apiSocket.listen(0)
-    apiSocket.accept()
+    api_thread = Thread(target=api.start_listening, args=[config])
 
+    api_thread.start()
 
-    #socket connect to the UI module
-
-    #connect to RPS module
-    #rps = RPSConnection(config.rpsAddress, config.apiAddress.ipv6)
-    #print('done')
-    #peer = rps.getRandomPeer()
-
-    #open tcp socket for p2p on new thread
-    #whenever a new connection arrives, open special UDP socket and add both of them to global open sockets lists
-
-    #while True:
-        #check for data on p2p tcp list
-        #if data, take approriate actions
-
-        #check for data on p2p udp socket list
-        #if data, relay or pass to UI module if connected
-
-        #UI module not connected, check for new connections
-        #if connected check for data
-        #if data take appropriate actions 
+    while True:
+        api_thread.join(1)
 
 
 if __name__ == "__main__":
