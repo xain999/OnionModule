@@ -37,6 +37,8 @@ class Onion(object):
         self.server.listen(5)
         self.sockets = [self.server]
 
+        self.tunnelMapping = dict()
+        self.sockMapping = dict()
         self.sock_states = dict()
 
     def build_tunnel(self, destPeer, randomPeers):
@@ -95,7 +97,7 @@ class Onion(object):
         msg = struct.pack("!H", length) + msg
         sock.sendall(msg)
 
-    def checkForData(self):
+    def checkForData(self, ui):
         readable, writable, exceptional = select.select(self.sockets, [], self.sockets)
 
         # Handle inputs
@@ -105,11 +107,10 @@ class Onion(object):
                 connection, client_address = s.accept()
                 connection.setblocking(0)
                 self.sockets.append(connection)
-                self.handle_data(connection)
             else:
                 self.handle_data(s)
 
-    def handle_data(self, conn):
+    def handle_data(self, conn, ui):
         rawData = conn.recv(4)
 
         if rawData:
@@ -122,7 +123,7 @@ class Onion(object):
             elif id == OnionMsgType.TUNNEL_BUILD_HS2:
                 self.handle_hs2(rawData)
             elif id == OnionMsgType.TUNNEL_DATA:
-                self.handle_tunnel_data(rawData)
+                self.handle_tunnel_data(rawData, conn, ui)
             elif id == OnionMsgType.TUNNEL_ERROR:
                 print "tunnel error"
 
@@ -133,6 +134,8 @@ class Onion(object):
     def handle_hs1(self, data, conn):
         tunnel_id = int(struct.unpack("!L", data[0:4])[0])
         data = data[4:]
+        ip = None
+        data = None
 
         if self.isIPv6:
             ip = socket.inet_ntop(socket.AF_INET6, data[0:16])
@@ -141,8 +144,12 @@ class Onion(object):
             ip = socket.inet_ntop(socket.AF_INET, data[0:4])
             data = data[4:]
 
+
         nxt = struct.unpack("!HHHH", data[0:8])
         port = nxt[1]
+
+        self.tunnelMapping[tunnel_id] = (ip, port)
+
         hostKeySize = nxt[2]
         hs1Size = nxt[3]
         data = data[8:]
@@ -178,7 +185,7 @@ class Onion(object):
 
         self.onion_auth.authSessionConfirm(0, hs2Payload)  #TODO: Add session id here
 
-    def handle_tunnel_data(self, data):
+    def handle_tunnel_data(self, data, conn, ui):
         tunnel_id = int(struct.unpack("!L", data[0:4])[0])
         data = data[4:]
 
@@ -198,8 +205,18 @@ class Onion(object):
             padding = data
 
             if not cvr == 0:
-                pass
-                #notify of data
+                ui.sendDataToUI(data)
         else:
-            pass
-            # forward data to next node
+            if self.sockMapping[conn] == None and self.tunnelMapping[tunnel_id] != None:
+                if hop.ipv6:
+                    sock = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
+                else:
+                    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                sock.connect(self.tunnelMapping[tunnel_id])
+                sock.sendall(data)
+                self.sockets.append(sock)
+                self.sockMapping[sock] = conn
+                self.sockMapping[conn] = sock
+
+            else:
+                self.sockMapping[conn].sendall(data)

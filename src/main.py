@@ -18,11 +18,7 @@ def main():
 
     config = Config.readConfiguration(args.c)
 
-    api_thread = Thread(target=api.start_listening, args=[config])
-
-    api_thread.start()
-
-    api_thread.join()
+    api.start_listening()
 
 
 if __name__ == "__main__":
