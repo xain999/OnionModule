@@ -1,2 +1,5 @@
 .vscode/*
 src/__pycache__/*
+.DS_STORE
+*.pyc
+.idea
