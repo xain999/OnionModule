@@ -142,9 +142,9 @@ class OnionAuthentication(object):
 
     def closeSession(self, sessionId):
         # sending the decryption message
-        size = sock.htons(8)
+        size = struct.pack('!H', 8)
         packetType = struct.pack('!H', OnionAuthType.AUTH_SESSION_CLOSE)
-        sessionIdPacket = socket.hton(sessionId)
+        sessionIdPacket = struct.pack('!L', sessionId)
 
         packet = size + packetType + sessionIdPacket
         self.sock.sendall(packet)
