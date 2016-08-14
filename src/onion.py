@@ -2,6 +2,7 @@ from onionAuthentication import OnionAuthentication, Peer
 import socket
 import select
 import struct
+import hashlib
 from enum import Enum
 import random
 from address import Address
@@ -24,6 +25,7 @@ class Onion(object):
         address = config.p2pAddress
         self.isIPv6 = True if address.ipv6 else False
         self.ip = address.ip
+        self.md5 = hashlib.md5()
 
         if address.ipv6:
             self.server = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
@@ -76,6 +78,19 @@ class Onion(object):
     def send_hs2(self, sock, tunnel_id, hs2_payload):
         msg = struct.pack("!HLHH", OnionMsgType.TUNNEL_BUILD_HS2, tunnel_id, 0, len(hs2_payload))
         msg += hs2_payload
+        length = len(msg) + 2
+        msg = struct.pack("!H", length) + msg
+        sock.sendall(msg)
+
+
+    def tunnel_data(self, sock, tunnel_id, is_cvr, data):
+        cvr = 1 if is_cvr else 0
+        msg = struct.pack("!HLHH", OnionMsgType.TUNNEL_DATA, tunnel_id, cvr, len(data))
+        msg += str.encode(data)
+
+        self.md5.update(data)
+        msg += self.md5.digest()
+
         length = len(msg) + 2
         msg = struct.pack("!H", length) + msg
         sock.sendall(msg)

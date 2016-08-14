@@ -1,6 +1,5 @@
 # system imports
 import ConfigParser
-import base64
 
 #user imports
 from address import *
@@ -23,9 +22,6 @@ class Config(object):
         self.packetSize = int(config.get('ONION', 'packet_size'))
         hostKeyName = config.get('DEFAULT', 'HOSTKEY')
         self.hostKey = open(hostKeyName, 'rb').read()
-
-        #self.bool_val = config.getboolean('ONION', 'bool_val')
-        #self.float_val = config.getfloat('ONION', 'pi_val')
 
     def _getAddress(self, address, port=None):
         if port is None:
