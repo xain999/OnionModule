@@ -72,7 +72,7 @@ class UIConnection(object):
 
         if len(readable) == 1:
             rawData = self.connection.recv(4)
-            size = socket.ntohs(rawData[:2])))
+            size = socket.ntohs(rawData[:2])
             id = socket.ntohs(int(str(rawData[2:4])))
             rawData = self.connection.recv(size - 4)
 
