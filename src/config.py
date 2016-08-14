@@ -1,7 +1,6 @@
 # system imports
 import ConfigParser
 import base64
-from M2Crypto import RSA
 
 #user imports
 from address import *

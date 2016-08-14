@@ -62,8 +62,8 @@ class OnionAuthentication(object):
         self.sock.sendall(packet)
 
         # receiving the response
-        size = struct.unpack('!H', recv(self.sock, 2))[0]
-        packet = recvAll(self.sock, size - 2)
+        size = struct.unpack('!H', recv_all(self.sock, 2))[0]
+        packet = recv_all(self.sock, size - 2)
         packetType = struct.unpack('!H', packet[:2])[0]
         sessionId = struct.unpack('!L', packet[2:6])[0]
 

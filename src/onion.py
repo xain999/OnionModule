@@ -43,12 +43,12 @@ class Onion(object):
         p = Peer("0.0.0.0", 0, False, "")
         hop_chain.append(p)
 
-        for i in range(0, len(hop_chain)-1):
-            self.build_hop(hop_chain[i], hop_chain[i+1])
+        for i in range(0, len(hop_chain) - 1):
+            self.build_hop(hop_chain[i], hop_chain[i + 1])
 
     def build_hop(self, peer, next_peer):
         sessionId, hs1 = self.onion_auth.authSessionStart(peer.key)
-        #print sessionId, hs1, peer.address.ip, peer.address.port
+        # print sessionId, hs1, peer.address.ip, peer.address.port
         tunnel_id = random.getrandbits(32)
         self.send_hs1(tunnel_id, peer.address, peer.key, hs1, next_peer.address)  # change peer.key to our key
 
@@ -74,13 +74,11 @@ class Onion(object):
         self.sock_states[sock] = SocketStates.SENT_HS1
 
     def send_hs2(self, sock, tunnel_id, hs2_payload):
-        msg = struct.pack("!HLHH", OnionMsgType.TUNNEL_BUILD_HS1, tunnel_id, 0, len(hs2_payload))
+        msg = struct.pack("!HLHH", OnionMsgType.TUNNEL_BUILD_HS2, tunnel_id, 0, len(hs2_payload))
         msg += hs2_payload
         length = len(msg) + 2
         msg = struct.pack("!H", length) + msg
         sock.sendall(msg)
-
-
 
     def checkForData(self):
         readable, writable, exceptional = select.select(self.sockets, [], self.sockets)
@@ -96,7 +94,6 @@ class Onion(object):
             else:
                 self.handle_data(s)
 
-
     def handle_data(self, conn):
         rawData = conn.recv(4)
 
@@ -106,9 +103,9 @@ class Onion(object):
             rawData = conn.recv(size - 4)
 
             if id == OnionMsgType.TUNNEL_BUILD_HS1:
-                self.handle_hs1(rawData)
+                self.handle_hs1(rawData, conn)
             elif id == OnionMsgType.TUNNEL_BUILD_HS2:
-                print "tunnel hs2"
+                self.handle_hs2(rawData)
             elif id == OnionMsgType.TUNNEL_DATA:
                 print "tunnel data"
             elif id == OnionMsgType.TUNNEL_ERROR:
@@ -118,7 +115,7 @@ class Onion(object):
             self.sockets.remove(conn)
             conn.close()
 
-    def handle_hs1(self, data):
+    def handle_hs1(self, data, conn):
         tunnel_id = int(struct.unpack("!L", data[0:4])[0])
         data = data[4:]
 
@@ -127,17 +124,41 @@ class Onion(object):
             data = data[20:]
         else:
             ip = socket.inet_ntop(socket.AF_INET, data[0:4])
-            data = data[8:]
+            data = data[4:]
 
-        nxt = struct.unpack("!HHHH", data[0:64])
+        nxt = struct.unpack("!HHHH", data[0:8])
         port = nxt[1]
         hostKeySize = nxt[2]
         hs1Size = nxt[3]
-        data = data[64:]
+        data = data[8:]
 
-        print tunnel_id, ip, port, hostKeySize, hs1Size, data
+        sourceHostKey = data[:hostKeySize]
+        data = data[hostKeySize:]
+        hs1Payload = data[:hs1Size]
 
-        if ip=="0.0.0.0":
-            print "tunnel end here"
+        #print tunnel_id, ip, port, hostKeySize, hs1Size
+        #print sourceHostKey
+        #print hs1Payload
+
+        session_id, hs2 = self.onion_auth.authSessionIncoming(sourceHostKey, hs1Payload)
+        #print session_id, hs2
+
+        self.send_hs2(conn, tunnel_id, hs2)
+
+        if ip == "0.0.0.0":
+            print "tunnel ends here"
             return
 
+    def handle_hs2(self, data):
+        tunnel_id = int(struct.unpack("!L", data[0:4])[0])
+        data = data[4:]
+
+        payloadSize = int(struct.unpack("!HH", data[0:4])[1])
+        data = data[4:]
+
+        hs2Payload = data[0:payloadSize]
+        padding = data[payloadSize:]
+
+        print tunnel_id, payloadSize, hs2Payload, padding
+
+        self.onion_auth.authSessionConfirm(0, hs2Payload)  #TODO: Add session id here
