@@ -32,27 +32,26 @@ class UIConnection(object):
         self.sock.bind((address.ip, address.port))
         self.sock.listen(1)
         self.connection, self.address = self.sock.accept()
+        self.key = ''
 
     def _buildTunnel(self, onion, rawData):
         port = struct.unpack('!H', rawData[2:4])[0]
         ip = None
-        key = None
+        self.key = None
 
         if self.isIPv6:
             ip = socket.inet_ntop(socket.AF_INET6, str(rawData[4:20]))
-            key = str(rawData[20:])
+            self.key = str(rawData[20:])
         else:
             ip = socket.inet_ntop(socket.AF_INET, str(rawData[4:8]))
-            key = str(rawData[8:])
+            self.key = str(rawData[8:])
         
-        destPeer = Peer(ip, port, self.isIPv6, key)
+        destPeer = Peer(ip, port, self.isIPv6, self.key)
         randomPeers = []
         for i in range(self.hops):
             randomPeers.append(self.rps.getRandomPeer())
-        #onion.buildTunnel(destPeer, randomPeers)
+        onion.buildTunnel(destPeer, randomPeers)
         print "Tunnel built"
-
-        #TODO: Respond the UI
 
     def _destroyTunnel(self, onion, rawData):
         tunnelId = struct.unpack('!L', (rawData[:4]))[0]
@@ -61,12 +60,35 @@ class UIConnection(object):
         
     def _coverTraffic(self, onion, rawData):
         print "cover traffic"
-        #onion.sendCoverTraffic()
+        size = struct.unpack('!H', (rawData[:2]))[0]
+        onion.sendCoverTraffic()
         print "traffic sent"
 
-    def sendDataToUI(self, data):
-        pass
+    def tunnelReady(self, tunnelId):
+        packet = struct.pack('!HL', UIConnectionType.ONION_TUNNEL_READY, tunnelId)
+        packet += str.encode(self.key)
+        length = len(packet) + 2
+        packet = packet + struct.pack('!H', length)
+        self.connection.sendall(packet)
+
+    def tunnelIncoming(self, tunnelId, key):
+        packet = struct.pack('!HL', UIConnectionType.ONION_TUNNEL_INCOMING, tunnelId)
+        packet += key
+        length = len(packet) + 2
+        packet = packet + struct.pack('!H', length)
+        self.connection.sendall(packet)
+
+    def sendDataToUI(self, tunnelId, data):
+        packet = struct.pack('!HL', UIConnectionType.ONION_TUNNEL_DATA, tunnelId)
+        packet += data
+        length = len(packet) + 2
+        packet = packet + struct.pack('!H', length)
+        self.connection.sendall(packet)
         
+    def _sendData(self, onion, data):
+        tunnelId = struct.unpack('!H', rawData[:4])[0]
+        data = data[:4]
+        onion.send(tunnelId, data)
 
     def checkForData(self):
         readable, writable, exceptional = select.select([ self.connection ], [], [ self.connection ])
@@ -94,6 +116,9 @@ class UIConnection(object):
                     self._destroyTunnel(onion, rawData)
                 elif id == UIConnectionType.ONION_TUNNEL_DATA:
                     print("onion data")
+                    self._sendData(onion, rawData)
+                elif id == UIConnectionType.ONION_COVER:
+                    print("cover traffic")
                     self._coverTraffic(onion, rawData)
             else:
                 print "UI Module Disconnected"

@@ -40,6 +40,11 @@ class Onion(object):
         self.tunnelMapping = dict()
         self.sockMapping = dict()
         self.sock_states = dict()
+        self.sendMapping = dict()
+
+    def sendData(self, tunnelId, data):
+        sock = self.sockMapping[tunnel_id]
+        self.tunnel_data(sock, tunnel_id, true, data)
 
     def build_tunnel(self, destPeer, randomPeers):
         hop_chain = [peer for peer in randomPeers]
@@ -76,6 +81,9 @@ class Onion(object):
         sock.sendall(msg)
         self.sockets.append(sock)
         self.sock_states[sock] = SocketStates.SENT_HS1
+
+        if self.sockMapping[tunnel_id] == None:
+            self.sockMapping[tunnel_id] = sock
 
     def send_hs2(self, sock, tunnel_id, hs2_payload):
         msg = struct.pack("!HLHH", OnionMsgType.TUNNEL_BUILD_HS2, tunnel_id, 0, len(hs2_payload))
