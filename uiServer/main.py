@@ -18,8 +18,8 @@ server_address = ('localhost', 30030)
 print('connecting to %s port %s' % server_address)
 sock.connect(server_address)
 
-connected = False
-tunnelId = None
+connected = True
+tunnelId = 123
 port = 32032
 ip = '127.0.0.1'
 
@@ -33,7 +33,7 @@ while True:
     print("\t4. Tunnel Destroy")
     print("\t5. Send Cover Traffic")
 
-    user = int(1)
+    user = int(input("gimme some number:"))
 
     if user == 1:
 
@@ -54,7 +54,7 @@ while True:
         msg += str.encode('n589nQCQqUsWMBLSFnaRNEwwX7ipqbFkDTwGkLEAjt4e9iGGBBk9U+iWGPN5RSMa')
         msg += str.encode('Y1CVSkwZ2LDUqsWB/gACpQ8CAwEAAQ==')
         msg += str.encode('-----END PUBLIC KEY-----')
-        length = len(msg)
+        length = len(msg) + 2
         msg = struct.pack("!H", length) + msg
         sock.sendall(msg)
 
@@ -120,8 +120,8 @@ while True:
         msg += str.encode('I ll have you spending all you got (come on)')
         msg += str.encode('Keep going til you hit the spot, whoa')
 
-        length = len(msg)
-        msg += struct.pack('!H', length)
+        length = len(msg) + 2
+        msg = struct.pack('!H', length) + msg
         sock.sendall(msg)
 
     elif user == 4:

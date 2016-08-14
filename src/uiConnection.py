@@ -1,8 +1,6 @@
 # system imports
-import socket
 import select
-import struct
-from threading import Thread
+import thread
 
 #user imports
 from socketHelper import recv_all
@@ -70,25 +68,32 @@ class UIConnection(object):
         readable, writable, exceptional = select.select([ self.connection ], [], [ self.connection ])
 
         if len(exceptional) > 0:
-            raise Exception("UI Module connection failed")
+            print "UI Module connection failed"
+            return True
 
         if len(readable) == 1:
             rawData = self.connection.recv(4)
-            size = struct.unpack('!H', rawData[:2])[0]
-            id = struct.unpack('!H', rawData[2:4])[0]
-            rawData = recv_all(self.connection, size - 4)
+            if len(rawData) != 0:
+                size = struct.unpack('!H', rawData[:2])[0]
+                id = struct.unpack('!H', rawData[2:4])[0]
+                rawData = recv_all(self.connection, size - 4)
 
-            print("rawData : " + str(rawData))
+                print("rawData : " + str(rawData))
 
-            #TODO: Do threading here
-            if id == UIConnectionType.ONION_TUNNEL_BUILD:
-                print ("build tunnel")
-                #_buildTunnel(onion, rps, rawData)
-            elif id == UIConnectionType.ONION_TUNNEL_DESTROY:
-                print("tunnel destroy")
-                #_destroyTunnel(onion, rawData)
-            elif id == UIConnectionType.ONION_COVER:
-                print("onion cover")
-                #_coverTraffic(onion, rps, rawData)
+                #TODO: Do threading here
+                if id == UIConnectionType.ONION_TUNNEL_BUILD:
+                    print ("build tunnel")
+                    #_buildTunnel(onion, rps, rawData)
+                elif id == UIConnectionType.ONION_TUNNEL_DESTROY:
+                    print("tunnel destroy")
+                    #_destroyTunnel(onion, rawData)
+                elif id == UIConnectionType.ONION_TUNNEL_DATA:
+                    print("onion data")
+                    #_coverTraffic(onion, rps, rawData)
+            else:
+                print "UI Disconnected"
+                return True
+
+        return False
             
 

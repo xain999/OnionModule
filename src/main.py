@@ -22,8 +22,7 @@ def main():
 
     api_thread.start()
 
-    while True:
-        api_thread.join(1)
+    api_thread.join()
 
 
 if __name__ == "__main__":

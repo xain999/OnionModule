@@ -47,5 +47,8 @@ def _handle_api_request(conn, addr):
 
 def start_listening(config):
     uiConn = UIConnection(config.apiAddress, config.apiAddress.ipv6, config.onionHops)
-    while True:
-        uiConn.checkForData()
+
+    end = False
+    while not end:
+        end = uiConn.checkForData()
+
