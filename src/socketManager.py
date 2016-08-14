@@ -1,38 +1,41 @@
 # system imports
 import socket
+import uuid
+
+from enum import Enum
+
 
 class UDPMsgType(Enum):
     FWD = 590
     USE = 591
 
-class UDPSocketManager(object):
-    def __init__(self, packetSize, isIPv6):
-        self.sockets = []
-        self.sockRef = {}
+class SocketManager(object):
+    def __init__(self, packetSize):
+        self.sockets = {}
         self.packetCount = {}
         self.packetCountTotal = {}
         self.packetAssembler = {}
         self.packetSize = packetSize
-        self.isIPv6 = isIPv6
+        self.isIPv6 = {}
 
     def addSocket(self, address):
-        sock = None
-        if self.isIPv6:
-            sock = socket.socket(socket.AF_INET6, socket.SOCK_DGRAM)
-        else
-            sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        sock.bind(address.ip, address.port)
-        ip, port = sock.getsockname()
-        self.sockets.append(sock)
-        self.sockRef[port] = sock
-        return port
+        if address.ipv6:
+            sock = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
+            sock.bind((address.ipv6, address.port))
+        else:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.bind((address.ip, address.port))
+
+        socket_id = uuid.uuid4()
+        self.sockets[socket_id] = sock
+        return socket_id
 
     def removeSocket(self, port):
-        if self.sockRef[port] != None:
-            sock = self.sockRef[port]
+        if self.sockets[port] != None:
+            sock = self.sockets[port]
             sock.close()
             self.sockets.remove(sock)
-            self.sockRef[port] = None
+            self.sockets[port] = None
 
     def _forwardMessage(self, rawData, sock):
         port = socket.ntohs(rawData[:2])
@@ -59,7 +62,7 @@ class UDPSocketManager(object):
             packetData = {}
             packetData[pktNo] = data
             self.packetAssembler[pktId] = packetData
-        else
+        else:
             self.packetCount[pktId] += 1
             packetData = self.packetAssembler[pktId]
             packetData[pktNo] = data
@@ -83,7 +86,7 @@ class UDPSocketManager(object):
             id = socket.ntohs(rawData[:2])
             
             if id == UDPMsgType.FWD:
-                _forwardMessage(rawData[2:], s)
+                self._forwardMessage(rawData[2:], s)
             elif id == UDPMsgType.USE:
-                _assembleAndRead(rawData[2:], ui)
+                self._assembleAndRead(rawData[2:], ui)
             

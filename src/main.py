@@ -4,20 +4,29 @@ import sys
 # user imports
 from config import *
 from rpsConnection import *
+from socketHelper import *
 
+import argparse
 
 def main():
-    print(sys.version)
-    config = Config.readConfiguration("../config.ini")
-    print(config)
-    print("abc")
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-c', help='Path to the config file', required=True)
+
+    args = parser.parse_args()
+
+    config = Config.readConfiguration(args.c)
+
+    apiSocket = create_socket(config.apiAddress)
+    apiSocket.listen(0)
+    apiSocket.accept()
+
 
     #socket connect to the UI module
 
     #connect to RPS module
-    rps = RPSConnection(config.rpsAddress, config.apiAddress.ipv6)
-    print('done')
-    peer = rps.getRandomPeer()
+    #rps = RPSConnection(config.rpsAddress, config.apiAddress.ipv6)
+    #print('done')
+    #peer = rps.getRandomPeer()
 
     #open tcp socket for p2p on new thread
     #whenever a new connection arrives, open special UDP socket and add both of them to global open sockets lists

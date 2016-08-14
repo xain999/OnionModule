@@ -20,22 +20,14 @@ class OnionMsgType(Enum):
 
 class Onion(object):
     def __init__(self, address, maxConnections, udpManager):
-        self.isIPv6 = isIPv6
+        self.isIPv6 = True if address.ipv6 else False
         self.ip = address.ip
-        self.udpManager = udpManager
 
         if address.ipv6:
             self.sock = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
         else:
             self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        
-        self.sock.bind((address.ip, address.port))
-        self.server.listen(maxConnections)
-        self.input = [ self.server ]
-        self.forward = []
-        self.forwardMapping = {}
-        self.reverse = []
-        self.reverseMapping = {}
+
 
     def _relaySetup(self, rawData, inSock):
         dstPort = socket.ntohs(rawData[:2])
@@ -67,7 +59,7 @@ class Onion(object):
 
         if self.isIPv6:
             response += socket.inet_pton(socket.AF_INET6, self.ip)
-        else
+        else:
             response += socket.inet_pton(socket.AF_INET, self.ip)
         
         size = len(response) + 2
@@ -80,7 +72,7 @@ class Onion(object):
         if inSock in self.forward:
             sock = self.reverseMapping[tunnelId]
             sock.sendall(rawData)
-        else
+        else:
             sock = self.forwardMapping[tunnelId]
             sock.sendall(rawData)
 
@@ -92,7 +84,7 @@ class Onion(object):
         if len(rawData) > 0:
             if inSock in self.forward:
                 sock = self.reverseMapping[tunnelId]
-            else
+            else:
                 sock = self.forwardMapping[tunnelId]
 
         sock.sendall(rawData)
@@ -104,19 +96,24 @@ class Onion(object):
         
 
     def _relayError(self, ui):
-        
+        pass
 
     def _tunnelRequest(self):
+        pass
 
     def _tunnelClose(self):
+        pass
 
     def buildTunnel(self):
+        pass
 
     def destroyTunnel(self):
+        pass
 
     def sendCoverTraffic(self):
+        pass
 
-    def update(self)
+    def update(self):
         readable, writable, exceptional = select.select(input, [], input)
 
         # Handle inputs
@@ -136,19 +133,18 @@ class Onion(object):
                     rawData = s.recv(size - 4)
                     
                     if id == OnionMsgType.RELAY_SETUP:
-                        _relaySetup(rawData, s)
+                        self._relaySetup(rawData, s)
                     elif id == OnionMsgType.RELAY_MSG:
-                        _relayMessage(rawData, s)
+                        self._relayMessage(rawData, s)
                     elif id == OnionMsgType.RELAY_DESTROY:
-                        _relayDestroy(rawData, s)
+                        self._relayDestroy(rawData, s)
                     elif id == OnionMsgType.RelayError:
-                        _relayError()
-                    elif id == OnionMsgType.TUNNEL_REQUEST
-                        _tunnelRequest()
-                    elif id == OnionMsgType.TUNNEL_CLOSE
-                        _tunnelClose()
-                    
-                    
+                        self._relayError()
+                    elif id == OnionMsgType.TUNNEL_REQUEST:
+                        self._tunnelRequest()
+                    elif id == OnionMsgType.TUNNEL_CLOSE:
+                        self._tunnelClose()
+
                 else:
-                    inputs.remove(s)
+                    #inputs.remove(s)
                     s.close()

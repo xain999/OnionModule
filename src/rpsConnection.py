@@ -4,6 +4,8 @@ import struct
 import threading
 
 #user imports
+from enum import Enum
+
 from address import *
 
 class Peer(object):

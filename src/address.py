@@ -13,7 +13,7 @@ def receiveAll(sock, size):
 
     while size > 0:
         recvd = sock.recv(size)
-        size = size - len(recvd)
+        size -= len(recvd)
         data = data + recvd
 
     return data
