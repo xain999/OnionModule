@@ -1,6 +1,9 @@
+A Simple Implementation of Onion Protocol for a VoIP client, programmed as a part of Peer-to-Peer course offered at TU München. This Module other modules to interact with and does not work standalone.
+
 Group 31
 Team Members: Zain ul Abideen & Furqan Shakoor
 Team Tag: #BasicBros
 Module: Onion
 Language: Python
+Version: 3.5
 Platform: Unix (OSX & Linux)
